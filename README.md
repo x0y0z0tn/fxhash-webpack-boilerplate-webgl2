@@ -1,5 +1,10 @@
-FXHASH Generative Token webpack boilerplate
-================
+# FXHASH Generative Token webpack boilerplate + WebGL2
+
+This is an example related to how to create polygons, convert them into triangles, and plot them with WebGl2. In my experience, with low levels of alpha, it works better than p5js' fill, and it plots faster.
+
+Additionally, to reduce the consumption of memory, in every iteration, this example renders to a texture, avoiding the necessity to store all the polygons or triangles to plot.
+
+This repo is a fork of https://github.com/fxhash/fxhash-webpack-boilerplate , the code is mainly based on [How to use WebGL2](https://webgl2fundamentals.org/webgl/lessons/webgl-getting-webgl2.html).
 
 A boilerplate to automate and ease the creation of Generative Tokens on fxhash. This project uses [webpack](https://webpack.js.org/) and [webpack-dev-server](https://github.com/webpack/webpack-dev-server) to improve the development and deployment experience.
 
@@ -7,12 +12,10 @@ Before diving into the development of your token, we recommend reading the [Guid
 
 If you are looking for a simpler boilerplate, you can use the [fxhash simple boilerplate](https://github.com/fxhash/fxhash-simple-boilerplate) instead.
 
-
 # Scope of this project
 
-* provide a local environment in which you can iterate and use modern features from the javascript ecosystem
-* automate the creation of a .zip file ready to be uploaded on fxhash
-
+-   provide a local environment in which you can iterate and use modern features from the javascript ecosystem
+-   automate the creation of a .zip file ready to be uploaded on fxhash
 
 # How to use
 
@@ -23,11 +26,13 @@ You will need to have [nodejs](https://nodejs.org/) installed.
 > First, make sure that your node version is >= 14
 
 Clone the repository on your machine and move to the directory
+
 ```sh
 $ git clone https://github.com/fxhash/fxhash-webpack-boilerplate.git your_folder && cd your_folder
 ```
 
 Install the packages required for the local environment
+
 ```sh
 $ npm i
 ```
@@ -56,7 +61,7 @@ Once the environment is started, you can edit the `src/index.js` file to start b
 
 You can import libraries using `npm` or by adding the library file in the `public/` folder and link those using relative paths in the `index.html`.
 
-Any file in the `public/` folder will be added to the final project. 
+Any file in the `public/` folder will be added to the final project.
 
 ## fxhash snippet
 
@@ -65,21 +70,22 @@ fxhash requires you to use a javascript code snippet so that the platform can in
 **During the development stages, the snippet will generate a random hash each time the page is refreshed**. This way, it helps you reproduce the conditions in which your token will be executed on fxhash.
 
 It creates 3 variables:
-- `fxhash`: a random 64 characters hexadecimal string. This particular variable will be hardcoded with a static hash when someone mints a token from your GT
-- `fxrand()`: a PRNG function that generates deterministic PRN between 0 and 1. **Simply use it instead of Math.random()**.
 
-*The index.js of this boilerplate quickly demonstrates how to use these*.
+-   `fxhash`: a random 64 characters hexadecimal string. This particular variable will be hardcoded with a static hash when someone mints a token from your GT
+-   `fxrand()`: a PRNG function that generates deterministic PRN between 0 and 1. **Simply use it instead of Math.random()**.
+
+_The index.js of this boilerplate quickly demonstrates how to use these_.
 
 ## How do Generative Tokens work
 
 This is how Generative Tokens work on fxhash:
-* you upload your project to the platform (see next section)
-* you mint your project
-* when a collector will mint its unique token from your Generative Token, a random hash will be hard-coded in the **fxhash code snippet**
-* the token will now have its own `index.html` file, with a **static** hash, ensuring its immutability 
+
+-   you upload your project to the platform (see next section)
+-   you mint your project
+-   when a collector will mint its unique token from your Generative Token, a random hash will be hard-coded in the **fxhash code snippet**
+-   the token will now have its own `index.html` file, with a **static** hash, ensuring its immutability
 
 The [Guide to mint a Generative Token](https://fxhash.xyz/articles/guide-mint-generative-token) give in-depth details about this process.
-
 
 # Publish your token
 
@@ -97,14 +103,13 @@ If your token does not work properly, you can iterate easily by updating your fi
 
 Finally, you can mint your token using the same `project.zip`file.
 
-
 # Rules to follow
 
 > Theses rules must be followed to ensure that your token will be future-proof, accepted by fxhash, and behave in the intended way
 
-* the zip file must be under 15 Mb
-* any path to a resource must be relative (./path/to/file.ext)
-* no external resources allowed, you must put all your resources in the `public/` folder (sub-folders are OK)
-* no network calls allowed (but calls to get resources from within your `public/` folder)
-* you must handle any viewport size (by implementing a response to the `resize` event of the `window`)
-* you **cannot use random number generation without a seed** (the same input hash must always yield the same output). The `fxrand` function does a very good job in that regard.
+-   the zip file must be under 15 Mb
+-   any path to a resource must be relative (./path/to/file.ext)
+-   no external resources allowed, you must put all your resources in the `public/` folder (sub-folders are OK)
+-   no network calls allowed (but calls to get resources from within your `public/` folder)
+-   you must handle any viewport size (by implementing a response to the `resize` event of the `window`)
+-   you **cannot use random number generation without a seed** (the same input hash must always yield the same output). The `fxrand` function does a very good job in that regard.

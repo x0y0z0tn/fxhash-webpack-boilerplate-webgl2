@@ -1,6 +1,18 @@
 body {
-  background-color: lightblue;
-
-  /* leave it to hide the scrollbars */
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #2f2f2f;
+}
+
+canvas {
+  width: 100vw;
+  max-height: 100%;
+  aspect-ratio: 3/2;
+  display: block;
 }

@@ -9,7 +9,11 @@
     "build": "webpack --config ./config/webpack.config.prod.js",
     "start": "webpack serve --config ./config/webpack.config.dev.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "earcut": "^2.2.4",
+    "p5": "^1.4.0",
+    "twgl.js": "^4.24.0"
+  },
   "devDependencies": {
     "adm-zip": "^0.5.9",
     "copy-webpack-plugin": "^9.0.1",
