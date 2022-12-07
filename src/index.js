@@ -81,220 +81,203 @@ void main() {
 }
 `;
 
-import p5 from "p5";
 import * as twgl from "twgl.js";
 import * as earcut from "earcut";
 
-const sketch = (p) => {
-  let gl;
-  let texture;
-  let framebuffer;
-  let textureWidth;
-  let textureHeight;
+let gl;
+let texture;
+let framebuffer;
+let textureWidth;
+let textureHeight;
 
-  const width = 1000;
-  const height = 1000;
+const width = 1000;
+const height = 1000;
 
-  let programInfo;
-  let programTexInfo;
+let programInfo;
+let programTexInfo;
 
-  p.setup = function () {
-    gl = document
-      .querySelector("#canvas")
-      .getContext("webgl2", { alpha: false, preserveDrawingBuffer: true });
+gl = document
+  .querySelector("#canvas")
+  .getContext("webgl2", { alpha: false, preserveDrawingBuffer: true });
 
-    if (!gl) {
-      console.error("WebGL2 not loaded");
-      p.draw = function () {};
-      return;
-    }
+if (!gl) {
+  console.error("WebGL2 not loaded");
+}
 
-    gl.getExtension("OES_texture_float_linear");
-    gl.getExtension("EXT_float_blend");
-    gl.getExtension("EXT_color_buffer_float");
+gl.getExtension("OES_texture_float_linear");
+gl.getExtension("EXT_float_blend");
+gl.getExtension("EXT_color_buffer_float");
 
-    gl.enable(gl.BLEND);
-    gl.disable(gl.DEPTH_TEST);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.blendFuncSeparate(
-      gl.SRC_ALPHA,
-      gl.ONE_MINUS_SRC_ALPHA,
-      gl.ONE,
-      gl.ONE_MINUS_SRC_ALPHA
-    );
+gl.enable(gl.BLEND);
+gl.disable(gl.DEPTH_TEST);
+gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+gl.blendFuncSeparate(
+  gl.SRC_ALPHA,
+  gl.ONE_MINUS_SRC_ALPHA,
+  gl.ONE,
+  gl.ONE_MINUS_SRC_ALPHA
+);
 
-    twgl.setAttributePrefix("a_");
-    programInfo = twgl.createProgramInfo(gl, [vs, fs]);
-    programTexInfo = twgl.createProgramInfo(gl, [vsForTex, fsForTex]);
+twgl.setAttributePrefix("a_");
+programInfo = twgl.createProgramInfo(gl, [vs, fs]);
+programTexInfo = twgl.createProgramInfo(gl, [vsForTex, fsForTex]);
 
-    p.randomSeed(fxrand() * 1000000);
-    p.noiseSeed(fxrand() * 1000000);
-    p.createCanvas(0, 0);
+createTexture(gl);
 
-    createTexture(gl);
+gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+gl.clearColor(0.4, 0.4, 0.4, 1);
+gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-    gl.clearColor(0.4, 0.4, 0.4, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+function getTriangles(polygon) {
+  let verts = earcut(polygon.flat());
+  return verts.map((idx) => polygon[idx]).flat();
+}
+
+function generateTriangles(polygons, color) {
+  let triangles = [];
+  let colors = [];
+
+  for (let ii = 0; ii < polygons.length; ii++) {
+    let polygon = polygons[ii];
+    let verts = getTriangles(polygon.vertices);
+
+    let localColors = Array(verts.length / 2)
+      .fill(color)
+      .flat();
+
+    triangles = triangles.concat(verts);
+    colors = colors.concat(localColors);
+  }
+
+  return [triangles, colors];
+}
+
+function plotTriangles(vertices, colors) {
+  let triangleArr = {
+    position: {
+      numComponents: 2,
+      data: vertices,
+    },
+    color: {
+      numComponents: 4,
+      data: colors,
+    },
   };
 
-  p.draw = function () {
-    let dx = 40 * 1.05 ** p.frameCount;
-    let alpha = 0.1 * 1.02 ** p.frameCount;
-
-    let polygons = [
-      {
-        vertices: [
-          [200 + dx, 300],
-          [230 + dx, 300],
-          [290 + dx, 400],
-          [200 + dx, 400],
-        ],
-      },
-    ];
-
-    let [triangles, colors] = generateTriangles(polygons, [1, 0, 0, alpha]);
-
-    plotTriangles(triangles, colors);
-
-    if (p.frameCount > 50) {
-      p.noLoop();
-    }
+  const texUniforms = {
+    u_matrix: [2 / width, 0, 0, 0, -2 / height, 0, -1, 1, 1],
+    u_resolution: [width, height],
   };
 
-  function getTriangles(polygon) {
-    let verts = earcut(polygon.flat());
-    return verts.map((idx) => polygon[idx]).flat();
-  }
+  let bufferInfo = twgl.createBufferInfoFromArrays(gl, triangleArr);
 
-  function generateTriangles(polygons, color) {
-    let triangles = [];
-    let colors = [];
+  let vao = twgl.createVAOFromBufferInfo(gl, programTexInfo, bufferInfo);
+  gl.bindVertexArray(vao);
 
-    for (let ii = 0; ii < polygons.length; ii++) {
-      let polygon = polygons[ii];
-      let verts = getTriangles(polygon.vertices);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+  gl.viewport(0, 0, textureWidth, textureHeight);
 
-      let localColors = Array(verts.length / 2)
-        .fill(color)
-        .flat();
+  gl.useProgram(programTexInfo.program);
 
-      triangles = triangles.concat(verts);
-      colors = colors.concat(localColors);
-    }
+  twgl.setUniforms(programTexInfo, texUniforms);
 
-    return [triangles, colors];
-  }
+  twgl.drawBufferInfo(gl, bufferInfo);
 
-  function plotTriangles(vertices, colors) {
-    let triangleArr = {
-      position: {
-        numComponents: 2,
-        data: vertices,
-      },
-      color: {
-        numComponents: 4,
-        data: colors,
-      },
-    };
+  let programAttrs = {
+    position: {
+      numComponents: 2,
+      data: [-1, -1, -1, 1, 1, -1, 1, -1, -1, 1, 1, 1],
+    },
+    texcoord: {
+      numComponents: 2,
+      data: [0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1],
+    },
+  };
 
-    const texUniforms = {
-      u_matrix: [2 / width, 0, 0, 0, -2 / height, 0, -1, 1, 1],
-      u_resolution: [width, height],
-    };
+  bufferInfo = twgl.createBufferInfoFromArrays(gl, programAttrs);
 
-    let bufferInfo = twgl.createBufferInfoFromArrays(gl, triangleArr);
+  vao = twgl.createVAOFromBufferInfo(gl, programInfo, bufferInfo);
 
-    let vao = twgl.createVAOFromBufferInfo(gl, programTexInfo, bufferInfo);
-    gl.bindVertexArray(vao);
+  gl.bindVertexArray(vao);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-    gl.viewport(0, 0, textureWidth, textureHeight);
+  gl.useProgram(programInfo.program);
 
-    gl.useProgram(programTexInfo.program);
+  const uniforms = { u_texture: 0 };
+  twgl.setUniforms(programInfo, uniforms);
 
-    twgl.setUniforms(programTexInfo, texUniforms);
+  twgl.resizeCanvasToDisplaySize(gl.canvas);
 
-    twgl.drawBufferInfo(gl, bufferInfo);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
 
-    let programAttrs = {
-      position: {
-        numComponents: 2,
-        data: [-1, -1, -1, 1, 1, -1, 1, -1, -1, 1, 1, 1],
-      },
-      texcoord: {
-        numComponents: 2,
-        data: [0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1],
-      },
-    };
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    bufferInfo = twgl.createBufferInfoFromArrays(gl, programAttrs);
+  gl.clear(gl.COLOR_BUFFER_BIT);
 
-    vao = twgl.createVAOFromBufferInfo(gl, programInfo, bufferInfo);
+  twgl.drawBufferInfo(gl, bufferInfo);
+}
 
-    gl.bindVertexArray(vao);
+function createTexture(gl) {
+  textureWidth = width;
+  textureHeight = height;
+  const targetTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, targetTexture);
 
-    gl.useProgram(programInfo.program);
+  var level = 0;
+  var internalFormat = gl.RGBA32F;
+  var border = 0;
+  var format = gl.RGBA;
+  let type = gl.FLOAT;
+  var data = null;
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    level,
+    internalFormat,
+    textureWidth,
+    textureHeight,
+    border,
+    format,
+    type,
+    data
+  );
 
-    const uniforms = { u_texture: 0 };
-    twgl.setUniforms(programInfo, uniforms);
+  gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-    twgl.resizeCanvasToDisplaySize(gl.canvas);
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+  const attachmentPoint = gl.COLOR_ATTACHMENT0;
+  level = 0;
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    attachmentPoint,
+    gl.TEXTURE_2D,
+    targetTexture,
+    level
+  );
 
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  texture = targetTexture;
+  framebuffer = fb;
+}
 
-    gl.clear(gl.COLOR_BUFFER_BIT);
+for (let i = 0; i < 50; i++) {
+  let dx = 40 * 1.05 ** i;
+  let alpha = 0.1 * 1.02 ** i;
 
-    twgl.drawBufferInfo(gl, bufferInfo);
-  }
+  let polygons = [
+    {
+      vertices: [
+        [200 + dx, 300],
+        [230 + dx, 300],
+        [290 + dx, 400],
+        [200 + dx, 400],
+      ],
+    },
+  ];
 
-  function createTexture(gl) {
-    textureWidth = width;
-    textureHeight = height;
-    const targetTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+  let [triangles, colors] = generateTriangles(polygons, [1, 0, 0, alpha]);
 
-    var level = 0;
-    var internalFormat = gl.RGBA32F;
-    var border = 0;
-    var format = gl.RGBA;
-    let type = gl.FLOAT;
-    var data = null;
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      level,
-      internalFormat,
-      textureWidth,
-      textureHeight,
-      border,
-      format,
-      type,
-      data
-    );
-
-    gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-    const fb = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-
-    const attachmentPoint = gl.COLOR_ATTACHMENT0;
-    level = 0;
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      attachmentPoint,
-      gl.TEXTURE_2D,
-      targetTexture,
-      level
-    );
-
-    texture = targetTexture;
-    framebuffer = fb;
-  }
-};
-
-new p5(sketch);
+  plotTriangles(triangles, colors);
+}

@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "earcut": "^2.2.4",
-    "p5": "^1.4.0",
     "twgl.js": "^4.24.0"
   },
   "devDependencies": {
