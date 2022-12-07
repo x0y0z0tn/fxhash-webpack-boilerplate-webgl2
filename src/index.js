@@ -1,4 +1,13 @@
-/* @license add your license lines here, these will be used by webpack.*/
+/* @license add your license lines here, these will be used by webpack.
+
+This package includes libraries which are released under the following license:
+
+earcut
+ISC License, Copyright (c) 2016, Mapbox
+
+twgl.js
+MIT License, Copyright 2019 Gregg Tavares
+*/
 
 // these are the variables you can use as inputs to your algorithms
 console.log(fxhash); // the 64 chars hex number fed to your algorithm
