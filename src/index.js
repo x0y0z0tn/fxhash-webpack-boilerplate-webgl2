@@ -211,7 +211,7 @@ function plotTriangles(vertices, colors) {
 
   gl.useProgram(programInfo.program);
 
-  const uniforms = { u_texture: 0 };
+  const uniforms = {};
   twgl.setUniforms(programInfo, uniforms);
 
   twgl.resizeCanvasToDisplaySize(gl.canvas);
